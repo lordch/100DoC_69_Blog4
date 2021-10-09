@@ -9,12 +9,12 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, cur
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from flask_gravatar import Gravatar
 from functools import wraps
-
+import os
 
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 ckeditor = CKEditor(app)
 Bootstrap(app)
 
@@ -44,7 +44,7 @@ def load_user(user_id):
 def admin_only(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if current_user.is_admin():
+        if current_user.is_authenticated and current_user.is_admin():
             return func(*args, **kwargs)
         else:
             return abort(403)
@@ -119,6 +119,7 @@ def register():
             )
             db.session.add(new_user)
             db.session.commit()
+            login_user(new_user)
             return redirect(url_for('get_all_posts'))
     return render_template("register.html", form=form)
 
@@ -229,3 +230,4 @@ def delete_post(post_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
